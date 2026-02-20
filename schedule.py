@@ -74,12 +74,30 @@ class schedule:
 
     def get_matchs_x_weeks(self, x:int):
         """Renvoie les matchs de la x_ième semaine de la saison (final de playoffs inclue)"""
-        ...
+        matchs = self.get_all_matchs()
+        res = []
+        for match in matchs:
+            if match['weekNumber'] == x:
+                res.append(match)
+        return res
+
+    def get_matchs_x_team(self, tricode:str):
+        matchs = self.get_all_matchs()
+        res = []
+        for match in matchs:
+            if (match['homeTeam']['teamTricode'] == tricode) or (match['awayTeam']['teamTricode'] == tricode):
+                res.append(match)
+        return res
 
     def get_matchs_today(self):
         """Renvoie les matchs du jour"""
-        ...
-    
+        matchs = self.get_all_matchs()
+        res = []
+        for match in matchs:
+            if GameDateTime.from_iso_utc(match['gameDateUTC']).is_today_us():
+                res.append(match)
+        return res
+
     def get_all_current_matchs(self):
         """Renvoie les matchs en cours"""
         matchs = self.get_all_matchs()

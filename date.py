@@ -91,8 +91,6 @@ class GameDateTime:
         return self._utc >= other._utc
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, GameDateTime):
-            return NotImplemented
         return self._utc == other._utc
 
     # -----------------------------
