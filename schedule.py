@@ -3,6 +3,7 @@
 
 import requests
 from utils import est_valide_3C
+from date import GameDateTime
 
 HEADERS = {
     "User-Agent": (
@@ -28,12 +29,62 @@ class schedule:
     """
 
     def __init__(self):
-        data = fetch_schedule()
-        leagueSchedule = data['leagueSchedule']
-        weeks = leagueSchedule['weeks']
-        games = leagueSchedule['gameDates']
+        self._data = fetch_schedule()
+        self._leagueSchedule = self._data['leagueSchedule']
+        self._weeks = self._leagueSchedule['weeks']
+        self._games = self._leagueSchedule['gameDates']
+        self._clean = False 
+        self.today = GameDateTime.now()
 
+    def clean(self):
+        return self._clean
 
-    def getYear(self):
+    def getYear(self) -> "datetime":
         """Renvoie l'année de la saison actuelle de NBA """
         return leagueSchedule['seasonYear']
+
+    def get_all_matchs(self) -> list:
+        """Renvoie tous les matchs de la saison (final de playoffs inclue)"""
+        if not self.clean():
+            games = []
+            for jour in self._games:
+                for game in jour['games']:
+                    games.append(game)
+            self._games = games
+            self._clean = True
+        return self._games
+    
+    def get_all_finished_matchs(self):
+        """Renvoie les matchs finie de la saison (final de playoffs inclue)"""
+        matchs = self.get_all_matchs()
+        res = []
+        for match in matchs:
+            if match['gameStatus'] == 3:
+                res.append(match)
+        return res
+
+    def get_all_coming_matchs(self):
+        """Renvoie les matchs a venir de la saison (final de playoffs inclue)"""
+        matchs = self.get_all_matchs()
+        res = []
+        for match in matchs:
+            if match['gameStatus'] == 1:
+                res.append(match)
+        return res
+
+    def get_matchs_x_weeks(self, x:int):
+        """Renvoie les matchs de la x_ième semaine de la saison (final de playoffs inclue)"""
+        ...
+
+    def get_matchs_today(self):
+        """Renvoie les matchs du jour"""
+        ...
+    
+    def get_all_current_matchs(self):
+        """Renvoie les matchs en cours"""
+        matchs = self.get_all_matchs()
+        res = []
+        for match in matchs:
+            if match['gameStatus'] == 2:
+                res.append(match)
+        return res
