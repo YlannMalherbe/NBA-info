@@ -2,7 +2,7 @@
 """Module proposant la classe schedule"""
 
 import requests
-from utils import est_valide_3C
+from utils import est_valide_tricode
 from date import GameDateTime
 
 HEADERS = {
@@ -23,17 +23,20 @@ def fetch_schedule() -> dict:
     return r.json()
 
 
-class schedule:
+class Schedule:
     """
         Classe Schedule permetant de gérer facilement le planning NBA et acceder rapidement au information
+
+        Une liste de match peut être fourni à l'initialisation pour généraliser l'utilisation de schedule 
     """
 
-    def __init__(self):
-        self._data = fetch_schedule()
-        self._leagueSchedule = self._data['leagueSchedule']
-        self._weeks = self._leagueSchedule['weeks']
-        self._games = self._leagueSchedule['gameDates']
-        self._clean = False 
+    def __init__(self,gamesData=None):
+        if gamesData == None:
+            self._data = fetch_schedule()
+            self._games = self._data['leagueSchedule']['gameDates']
+        else:
+            self._games = gamesData
+        self._clean = gamesData != None 
         self.today = GameDateTime.now()
 
     def clean(self):
