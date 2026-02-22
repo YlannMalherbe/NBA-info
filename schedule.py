@@ -57,7 +57,7 @@ def fetch_schedule(force_refresh: bool = False) -> dict:
     if os.path.exists(CACHE_FILE) and not force_refresh:
         cache = _load_cache()
         if _is_cache_valid(cache):
-            return cache["data"]
+            return cache
     try:
         url = "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json"
         r = requests.get(url, headers=HEADERS, timeout=10)
@@ -69,7 +69,7 @@ def fetch_schedule(force_refresh: bool = False) -> dict:
         return data
     except (requests.RequestException, ConnectionFailedError) as e:
         if os.path.exists(CACHE_FILE):
-            return _load_cache()["data"]
+            return _load_cache()
         raise ConnectionFailedError("Impossible de récupérer les données NBA et aucun cache disponible.")
 
 class Schedule:
@@ -81,7 +81,7 @@ class Schedule:
 
     def __init__(self,gamesData=None):
         if gamesData == None:
-            self._data = fetch_schedule()
+            self._data = fetch_schedule()["data"]
             self._games = self._data['leagueSchedule']['gameDates']
         else:
             self._games = gamesData
