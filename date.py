@@ -74,6 +74,35 @@ class GameDateTime:
         """Date en heure française."""
         return self.paris.date()
 
+    @property
+    def us_time(self):
+        """Heure (HH:MM:SS) en Eastern Time."""
+        return self.us.time()
+
+    @property
+    def paris_time(self):
+        """Heure (HH:MM:SS) en heure française."""
+        return self.paris.time()
+
+    @property
+    def us_hour(self) -> str:
+        """Heure formatée HH:MM en Eastern Time."""
+        return self.us.strftime("%H:%M")
+
+    @property
+    def paris_hour(self) -> str:
+        """Heure formatée HH:MM en heure de Paris."""
+        return self.paris.strftime("%H:%M")
+
+    def get_hours(self) -> dict[str, str]:
+        """
+        Retourne les heures formatées US et Paris.
+        """
+        return {
+            "us": self.us_hour,
+            "paris": self.paris_hour,
+        }
+
     # -----------------------------
     # Comparaisons naturelles
     # -----------------------------
@@ -129,7 +158,7 @@ class GameDateTime:
     # -----------------------------
 
     def __str__(self) -> str:
-        return self.us.strftime("%Y-%m-%d %H:%M (US ET)")
+        return f'{self.paris_date} {self.paris_time} (Paris)'
 
     def __repr__(self) -> str:
         return f"GameDateTime(utc={self._utc.isoformat()})"

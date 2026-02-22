@@ -2,8 +2,12 @@
 """Module proposant la classe schedule"""
 
 import requests
+import json
+import os
+from datetime import datetime, timedelta
 from utils import est_valide_tricode
 from date import GameDateTime
+from match import match
 
 HEADERS = {
     "User-Agent": (
@@ -15,13 +19,58 @@ HEADERS = {
     "Referer": "https://www.nba.com/",
 }
 
-def fetch_schedule() -> dict:
-    """Renvoie le json contenant les informations et le planning des matches"""
-    url = "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json"
-    r = requests.get(url, headers=HEADERS, timeout=10)
-    r.raise_for_status()
-    return r.json()
+CACHE_FILE = "schedule_cache.json"
+CACHE_DURATION = timedelta(hours=6)
 
+class ConnectionFailedError(Exception):
+    pass
+
+def _save_cache(data: dict):
+    """Fonction pour faire un cache des données de l'API NBA"""
+    cache_content = {
+        "last_update": datetime.utcnow().isoformat(),
+        "data": data}
+    with open(CACHE_FILE, "w", encoding="utf-8") as f:
+        json.dump(cache_content, f, ensure_ascii=False, indent=4)
+
+def _load_cache():
+    """Fonction pour récuperer le cache enregistré de l'API"""
+    with open(CACHE_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _is_cache_valid(cache: dict) -> bool:
+    """Fonction pour vérifier si le cache à besoin d'être update ou non"""
+    last_update = datetime.fromisoformat(cache["last_update"])
+    return datetime.utcnow() - last_update < CACHE_DURATION
+
+
+def fetch_schedule(force_refresh: bool = False) -> dict:
+    """
+    Récupère le schedule NBA.
+
+    - Si cache valide → retourne cache
+    - Si cache expiré → tente refresh
+    - Si refresh échoue → fallback sur ancien cache
+    - Si aucun cache dispo → erreur
+    """
+    if os.path.exists(CACHE_FILE) and not force_refresh:
+        cache = _load_cache()
+        if _is_cache_valid(cache):
+            return cache["data"]
+    try:
+        url = "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json"
+        r = requests.get(url, headers=HEADERS, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+        if not data:
+            raise ConnectionFailedError("Réponse vide reçue depuis l'API NBA.")
+        _save_cache(data)
+        return data
+    except (requests.RequestException, ConnectionFailedError) as e:
+        if os.path.exists(CACHE_FILE):
+            return _load_cache()["data"]
+        raise ConnectionFailedError("Impossible de récupérer les données NBA et aucun cache disponible.")
 
 class Schedule:
     """
@@ -42,17 +91,13 @@ class Schedule:
     def clean(self):
         return self._clean
 
-    def getYear(self) -> "datetime":
-        """Renvoie l'année de la saison actuelle de NBA """
-        return leagueSchedule['seasonYear']
-
     def get_all_matchs(self) -> list:
         """Renvoie tous les matchs de la saison (final de playoffs inclue)"""
         if not self.clean():
             games = []
             for jour in self._games:
                 for game in jour['games']:
-                    games.append(game)
+                    games.append(match(game))
             self._games = games
             self._clean = True
         return self._games
@@ -62,7 +107,7 @@ class Schedule:
         matchs = self.get_all_matchs()
         res = []
         for match in matchs:
-            if match['gameStatus'] == 3:
+            if match.game_status == 3:
                 res.append(match)
         return res
 
@@ -71,7 +116,7 @@ class Schedule:
         matchs = self.get_all_matchs()
         res = []
         for match in matchs:
-            if match['gameStatus'] == 1:
+            if match.game_status == 1:
                 res.append(match)
         return res
 
@@ -80,7 +125,7 @@ class Schedule:
         matchs = self.get_all_matchs()
         res = []
         for match in matchs:
-            if match['weekNumber'] == x:
+            if match.week_number == x:
                 res.append(match)
         return res
 
@@ -88,7 +133,7 @@ class Schedule:
         matchs = self.get_all_matchs()
         res = []
         for match in matchs:
-            if (match['homeTeam']['teamTricode'] == tricode) or (match['awayTeam']['teamTricode'] == tricode):
+            if tricode in match.teams_tricode.values():
                 res.append(match)
         return res
 
@@ -97,7 +142,7 @@ class Schedule:
         matchs = self.get_all_matchs()
         res = []
         for match in matchs:
-            if GameDateTime.from_iso_utc(match['gameDateUTC']).is_today_us():
+            if match.game_date.is_today_us():
                 res.append(match)
         return res
 
@@ -106,6 +151,6 @@ class Schedule:
         matchs = self.get_all_matchs()
         res = []
         for match in matchs:
-            if match['gameStatus'] == 2:
+            if match.game_status == 2:
                 res.append(match)
         return res
