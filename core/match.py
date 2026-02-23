@@ -1,17 +1,44 @@
 """Module de match facilitant la lecture des matchs de l'API NBA"""
 
-from date import GameDateTime
+import requests
+import json
+from core.date import GameDateTime
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0 Safari/537.36"
+    ),
+    "Accept": "application/json",
+    "Referer": "https://www.nba.com/",
+}
+
+
+def fetch_game(game_id: str) -> dict:
+    """
+    Récupère les données live d'un match spécifique via son game_id.
+    """
+    url = f"https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json"
+
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=10)
+        r.raise_for_status()
+        return r.json()
+    except requests.RequestException as e:
+        raise ConnectionError(f"Impossible de récupérer le match {game_id} : {e}")
 
 class match:
 
     def __init__(self, match_data:dict):
-        self.raw_data = match_data
+        self.base_data = match_data
         self._homeTeam = match_data['homeTeam']
         self._awayTeam = match_data['awayTeam']
         self._game_status = match_data['gameStatus']
         self._week_number = match_data['weekNumber']
         self._tricodes = {'homeTeam':match_data['homeTeam']['teamTricode'], 'awayTeam':match_data['awayTeam']['teamTricode']}
         self._game_date = GameDateTime.from_iso_utc(match_data['gameDateTimeUTC'])
+        self._match_data = load_match_data()
 
     @property
     def game_status(self):
@@ -46,6 +73,14 @@ class match:
     def game_date(self):
         """Renvoie la date en heure française du match"""
         return self._game_date
+
+    def get_points_leaders(self):
+        """Renvoie le/les leader(s) en nombre de points"""
+        return self.base_data['pointsLeaders']
+
+    def load_match_data(self):
+        """Récupère les données de la partie en ligne"""
+        self._match_data = fetch_game(game_id=self.base_data['gameId'])['game']
 
     def __repr__(self):
         return f"Match <{self._tricodes['homeTeam']},{self._tricodes['awayTeam']}> ({str(self._game_date)})"

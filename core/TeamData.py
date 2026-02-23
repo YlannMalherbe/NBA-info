@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Module proposant la classe inf_team"""
 
-from schedule import Schedule
-from _team_data import NBA_TEAMS
-from utils import est_valide_tricode
+from core.schedule import Schedule
+from core._team_data import NBA_TEAMS
+from core.utils import est_valide_tricode
 
 class TeamNonExistanteErreur(Exception):
     pass
@@ -54,8 +54,12 @@ class TeamData:
         """Renvoie les matchs finie de la team """
         return self.schedule.get_all_finished_matchs()
     
+    def get_last_match(self):
+        """Renvoie le dernier match joué de l'équipe"""
+        return self.get_all_finished_matchs()[-1]
+
     def get_next_match(self):
-        """Renvoie le prochain match de la team """
+        """Renvoie le prochain match de la team"""
         return self.schedule.get_all_coming_matchs()[0]
 
     def get_all_matchup(self,matchup_tricode:str):

@@ -5,9 +5,9 @@ import requests
 import json
 import os
 from datetime import datetime, timedelta
-from utils import est_valide_tricode
-from date import GameDateTime
-from match import match
+from core.utils import est_valide_tricode
+from core.date import GameDateTime
+from core.match import match
 
 HEADERS = {
     "User-Agent": (
@@ -19,7 +19,7 @@ HEADERS = {
     "Referer": "https://www.nba.com/",
 }
 
-CACHE_FILE = "schedule_cache.json"
+CACHE_FILE = "assets/schedule_cache.json"
 CACHE_DURATION = timedelta(hours=6)
 
 class ConnectionFailedError(Exception):
@@ -57,7 +57,7 @@ def fetch_schedule(force_refresh: bool = False) -> dict:
     if os.path.exists(CACHE_FILE) and not force_refresh:
         cache = _load_cache()
         if _is_cache_valid(cache):
-            return cache
+            return cache["data"]
     try:
         url = "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json"
         r = requests.get(url, headers=HEADERS, timeout=10)
@@ -69,7 +69,7 @@ def fetch_schedule(force_refresh: bool = False) -> dict:
         return data
     except (requests.RequestException, ConnectionFailedError) as e:
         if os.path.exists(CACHE_FILE):
-            return _load_cache()
+            return _load_cache()["data"]
         raise ConnectionFailedError("Impossible de récupérer les données NBA et aucun cache disponible.")
 
 class Schedule:
@@ -81,7 +81,7 @@ class Schedule:
 
     def __init__(self,gamesData=None):
         if gamesData == None:
-            self._data = fetch_schedule()["data"]
+            self._data = fetch_schedule()
             self._games = self._data['leagueSchedule']['gameDates']
         else:
             self._games = gamesData
@@ -89,6 +89,7 @@ class Schedule:
         self.today = GameDateTime.now()
 
     def clean(self):
+        """Renvoie est-ce que les données on été traité ou non"""
         return self._clean
 
     def get_all_matchs(self) -> list:
@@ -130,6 +131,7 @@ class Schedule:
         return res
 
     def get_matchs_x_team(self, tricode:str):
+        """Récupère les matchs ou l'équipe x est présente"""
         matchs = self.get_all_matchs()
         res = []
         for match in matchs:

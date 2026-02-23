@@ -1,3 +1,5 @@
+"""Module contenant toutes les informations complémentaire sur les équipes NBA"""
+
 from dataclasses import dataclass
 from enum import Enum
 

@@ -1,5 +1,6 @@
-from __future__ import annotations
+"""Module facilitant la lecture des dates et heures"""
 
+from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo

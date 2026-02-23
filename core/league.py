@@ -1,8 +1,8 @@
 """Module facilitant la lecture des données de toute la league"""
 
-from _team_data import NBA_TEAMS,Conference
-from TeamData import TeamData
-from utils import classer_dictionnaire
+from core._team_data import NBA_TEAMS,Conference
+from core.TeamData import TeamData
+from core.utils import classer_dictionnaire
 
 class LeagueData:
     """LeagueData permet d'obtenir tout les infos et statistique sur la NBA
