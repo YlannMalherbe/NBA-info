@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Module proposant la classe schedule"""
 
-import requests
 import json
 import os
 from datetime import datetime, timedelta
-from core.utils import est_valide_tricode
+from pathlib import Path
+
+import requests
+
 from core.date import GameDateTime
 from core.match import match
 
@@ -19,19 +21,23 @@ HEADERS = {
     "Referer": "https://www.nba.com/",
 }
 
-CACHE_FILE = "assets/schedule_cache.json"
 CACHE_DURATION = timedelta(hours=6)
+
+BASE_DIR = Path(__file__).parent.parent
+ASSETS_DIR = BASE_DIR / "assets"
+CACHE_FILE = ASSETS_DIR / "schedule_cache.json"
+
 
 class ConnectionFailedError(Exception):
     pass
 
+
 def _save_cache(data: dict):
     """Fonction pour faire un cache des données de l'API NBA"""
-    cache_content = {
-        "last_update": datetime.utcnow().isoformat(),
-        "data": data}
+    cache_content = {"last_update": datetime.utcnow().isoformat(), "data": data}
     with open(CACHE_FILE, "w", encoding="utf-8") as f:
         json.dump(cache_content, f, ensure_ascii=False, indent=4)
+
 
 def _load_cache():
     """Fonction pour récuperer le cache enregistré de l'API"""
@@ -70,22 +76,25 @@ def fetch_schedule(force_refresh: bool = False) -> dict:
     except (requests.RequestException, ConnectionFailedError) as e:
         if os.path.exists(CACHE_FILE):
             return _load_cache()["data"]
-        raise ConnectionFailedError("Impossible de récupérer les données NBA et aucun cache disponible.")
+        raise ConnectionFailedError(
+            "Impossible de récupérer les données NBA et aucun cache disponible."
+        )
+
 
 class Schedule:
     """
-        Classe Schedule permetant de gérer facilement le planning NBA et acceder rapidement au information
+    Classe Schedule permetant de gérer facilement le planning NBA et acceder rapidement au information
 
-        Une liste de match peut être fourni à l'initialisation pour généraliser l'utilisation de schedule 
+    Une liste de match peut être fourni à l'initialisation pour généraliser l'utilisation de schedule
     """
 
-    def __init__(self,gamesData=None):
+    def __init__(self, gamesData=None):
         if gamesData == None:
             self._data = fetch_schedule()
-            self._games = self._data['leagueSchedule']['gameDates']
+            self._games = self._data["leagueSchedule"]["gameDates"]
         else:
             self._games = gamesData
-        self._clean = gamesData != None 
+        self._clean = gamesData != None
         self.today = GameDateTime.now()
 
     def clean(self):
@@ -97,62 +106,62 @@ class Schedule:
         if not self.clean():
             games = []
             for jour in self._games:
-                for game in jour['games']:
+                for game in jour["games"]:
                     games.append(match(game))
             self._games = games
             self._clean = True
         return self._games
-    
+
     def get_all_finished_matchs(self):
         """Renvoie les matchs finie de la saison (final de playoffs inclue)"""
         matchs = self.get_all_matchs()
         res = []
-        for match in matchs:
-            if match.game_status == 3:
-                res.append(match)
+        for game in matchs:
+            if game.game_status == 3:
+                res.append(game)
         return res
 
     def get_all_coming_matchs(self):
         """Renvoie les matchs a venir de la saison (final de playoffs inclue)"""
         matchs = self.get_all_matchs()
         res = []
-        for match in matchs:
-            if match.game_status == 1:
-                res.append(match)
+        for game in matchs:
+            if game.game_status == 1:
+                res.append(game)
         return res
 
-    def get_matchs_x_weeks(self, x:int):
+    def get_matchs_x_weeks(self, x: int):
         """Renvoie les matchs de la x_ième semaine de la saison (final de playoffs inclue)"""
         matchs = self.get_all_matchs()
         res = []
-        for match in matchs:
-            if match.week_number == x:
-                res.append(match)
+        for game in matchs:
+            if game.week_number == x:
+                res.append(game)
         return res
 
-    def get_matchs_x_team(self, tricode:str):
+    def get_matchs_x_team(self, tricode: str):
         """Récupère les matchs ou l'équipe x est présente"""
         matchs = self.get_all_matchs()
         res = []
-        for match in matchs:
-            if tricode in match.teams_tricode.values():
-                res.append(match)
+        for game in matchs:
+            if tricode in game.teams_tricode.values():
+                res.append(game)
         return res
 
     def get_matchs_today(self):
         """Renvoie les matchs du jour"""
         matchs = self.get_all_matchs()
         res = []
-        for match in matchs:
-            if match.game_date.is_today_us():
-                res.append(match)
+        for game in matchs:
+            if game.game_date.is_today_us():
+                res.append(game)
         return res
 
     def get_all_current_matchs(self):
         """Renvoie les matchs en cours"""
         matchs = self.get_all_matchs()
         res = []
-        for match in matchs:
-            if match.game_status == 2:
-                res.append(match)
+        for game in matchs:
+            if game.game_status == 2:
+                res.append(game)
         return res

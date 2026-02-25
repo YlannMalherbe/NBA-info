@@ -1,7 +1,7 @@
 """Module de match facilitant la lecture des matchs de l'API NBA"""
 
 import requests
-import json
+
 from core.date import GameDateTime
 
 HEADERS = {
@@ -28,26 +28,34 @@ def fetch_game(game_id: str) -> dict:
     except requests.RequestException as e:
         raise ConnectionError(f"Impossible de récupérer le match {game_id} : {e}")
 
-class match:
 
-    def __init__(self, match_data:dict):
+class match:
+    def __init__(self, match_data: dict):
         self.base_data = match_data
-        self._homeTeam = match_data['homeTeam']
-        self._awayTeam = match_data['awayTeam']
-        self._game_status = match_data['gameStatus']
-        self._week_number = match_data['weekNumber']
-        self._tricodes = {'homeTeam':match_data['homeTeam']['teamTricode'], 'awayTeam':match_data['awayTeam']['teamTricode']}
-        self._game_date = GameDateTime.from_iso_utc(match_data['gameDateTimeUTC'])
-        self._match_data = load_match_data()
+        self._homeTeam = match_data["homeTeam"]
+        self._awayTeam = match_data["awayTeam"]
+        self._arena = match_data["arenaName"]
+        self._game_status = match_data["gameStatus"]
+        self._week_number = match_data["weekNumber"]
+        self._tricodes = {
+            "homeTeam": match_data["homeTeam"]["teamTricode"],
+            "awayTeam": match_data["awayTeam"]["teamTricode"],
+        }
+        self._game_date = GameDateTime.from_iso_utc(match_data["gameDateTimeUTC"])
+        self._match_data = None
 
     @property
     def game_status(self):
         """Renvoie le statue du match
-            1 : Match à venir
-            2 : Match en cours
-            3 : Match fini
+        1 : Match à venir
+        2 : Match en cours
+        3 : Match fini
         """
         return self._game_status
+
+    @property
+    def arena(self):
+        return self._arena
 
     @property
     def week_number(self):
@@ -57,16 +65,18 @@ class match:
     @property
     def teams_tricode(self):
         """Renvoie les tricodes des 2 équipes
-            return dict{'homeTeam':homeTeamTricode, 'awayTeam':awayTeamTricode}
+        return dict{'homeTeam':homeTeamTricode, 'awayTeam':awayTeamTricode}
         """
         return self._tricodes
 
     @property
     def homeTeam(self):
+        """Renvoie les states de la partie de l'équipe à domicile"""
         return self._homeTeam
 
     @property
     def awayTeam(self):
+        """Renvoie les states de la partie de l'équipe à l'extérieur"""
         return self._awayTeam
 
     @property
@@ -76,14 +86,14 @@ class match:
 
     def get_points_leaders(self):
         """Renvoie le/les leader(s) en nombre de points"""
-        return self.base_data['pointsLeaders']
+        return self.base_data["pointsLeaders"]
 
     def load_match_data(self):
         """Récupère les données de la partie en ligne"""
-        self._match_data = fetch_game(game_id=self.base_data['gameId'])['game']
+        self._match_data = fetch_game(game_id=self.base_data["gameId"])["game"]
 
     def __repr__(self):
         return f"Match <{self._tricodes['homeTeam']},{self._tricodes['awayTeam']}> ({str(self._game_date)})"
-    
+
     def __str__(self):
         return f"Match {self._tricodes['awayTeam']} @ {self._tricodes['homeTeam']} - {str(self._game_date)}"
