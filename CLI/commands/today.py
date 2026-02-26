@@ -30,7 +30,7 @@ def today():
         md = Markdown(f"""
 > **{game.awayTeam["teamName"]} @ {game.homeTeam["teamName"]}**
 >
-> 📅 {game.game_date}
+> 📅 {game.game_date.paris_hour}
 >
 > 📍 {game.arena}
 """)

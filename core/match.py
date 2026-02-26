@@ -45,7 +45,7 @@ class match:
         self._match_data = None
 
     @property
-    def game_status(self):
+    def game_status(self) -> str:
         """Renvoie le statue du match
         1 : Match à venir
         2 : Match en cours
@@ -54,16 +54,16 @@ class match:
         return self._game_status
 
     @property
-    def arena(self):
+    def arena(self) -> str:
         return self._arena
 
     @property
-    def week_number(self):
+    def week_number(self) -> str:
         """Renvoie le numéro de semaine du match"""
         return self._week_number
 
     @property
-    def teams_tricode(self):
+    def teams_tricode(self) -> dict[str, str]:
         """Renvoie les tricodes des 2 équipes
         return dict{'homeTeam':homeTeamTricode, 'awayTeam':awayTeamTricode}
         """
@@ -80,7 +80,7 @@ class match:
         return self._awayTeam
 
     @property
-    def game_date(self):
+    def game_date(self) -> GameDateTime:
         """Renvoie la date en heure française du match"""
         return self._game_date
 
@@ -88,7 +88,7 @@ class match:
         """Renvoie le/les leader(s) en nombre de points"""
         return self.base_data["pointsLeaders"]
 
-    def load_match_data(self):
+    def load_match_data(self) -> None:
         """Récupère les données de la partie en ligne"""
         self._match_data = fetch_game(game_id=self.base_data["gameId"])["game"]
 

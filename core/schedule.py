@@ -73,7 +73,7 @@ def fetch_schedule(force_refresh: bool = False) -> dict:
             raise ConnectionFailedError("Réponse vide reçue depuis l'API NBA.")
         _save_cache(data)
         return data
-    except (requests.RequestException, ConnectionFailedError) as e:
+    except (requests.RequestException, ConnectionFailedError):
         if os.path.exists(CACHE_FILE):
             return _load_cache()["data"]
         raise ConnectionFailedError(
@@ -89,19 +89,19 @@ class Schedule:
     """
 
     def __init__(self, gamesData=None):
-        if gamesData == None:
+        if gamesData is None:
             self._data = fetch_schedule()
             self._games = self._data["leagueSchedule"]["gameDates"]
         else:
             self._games = gamesData
-        self._clean = gamesData != None
+        self._clean = gamesData is not None
         self.today = GameDateTime.now()
 
-    def clean(self):
+    def clean(self) -> bool:
         """Renvoie est-ce que les données on été traité ou non"""
         return self._clean
 
-    def get_all_matchs(self) -> list:
+    def get_all_matchs(self) -> list[match]:
         """Renvoie tous les matchs de la saison (final de playoffs inclue)"""
         if not self.clean():
             games = []
@@ -112,7 +112,7 @@ class Schedule:
             self._clean = True
         return self._games
 
-    def get_all_finished_matchs(self):
+    def get_all_finished_matchs(self) -> list[match]:
         """Renvoie les matchs finie de la saison (final de playoffs inclue)"""
         matchs = self.get_all_matchs()
         res = []
@@ -121,7 +121,7 @@ class Schedule:
                 res.append(game)
         return res
 
-    def get_all_coming_matchs(self):
+    def get_all_coming_matchs(self) -> list[match]:
         """Renvoie les matchs a venir de la saison (final de playoffs inclue)"""
         matchs = self.get_all_matchs()
         res = []
@@ -130,7 +130,7 @@ class Schedule:
                 res.append(game)
         return res
 
-    def get_matchs_x_weeks(self, x: int):
+    def get_matchs_x_weeks(self, x: int) -> list[match]:
         """Renvoie les matchs de la x_ième semaine de la saison (final de playoffs inclue)"""
         matchs = self.get_all_matchs()
         res = []
@@ -139,7 +139,7 @@ class Schedule:
                 res.append(game)
         return res
 
-    def get_matchs_x_team(self, tricode: str):
+    def get_matchs_x_team(self, tricode: str) -> list[match]:
         """Récupère les matchs ou l'équipe x est présente"""
         matchs = self.get_all_matchs()
         res = []
@@ -148,7 +148,7 @@ class Schedule:
                 res.append(game)
         return res
 
-    def get_matchs_today(self):
+    def get_matchs_today(self) -> list[match]:
         """Renvoie les matchs du jour"""
         matchs = self.get_all_matchs()
         res = []
@@ -157,7 +157,7 @@ class Schedule:
                 res.append(game)
         return res
 
-    def get_all_current_matchs(self):
+    def get_all_current_matchs(self) -> list[match]:
         """Renvoie les matchs en cours"""
         matchs = self.get_all_matchs()
         res = []

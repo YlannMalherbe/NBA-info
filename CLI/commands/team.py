@@ -19,7 +19,6 @@ def info(
     Display information about an NBA team.
     """
 
-    # 🔹 Mode interactif si aucun argument
     if name is None:
         name = select_team_menu()
 

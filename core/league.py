@@ -23,7 +23,7 @@ class LeagueData:
         }
 
     @property
-    def teams(self):
+    def teams(self) -> dict[str, TeamData]:
         """Renvoie un dictionnaire contenant toutes les équipes de NBA
         return {tricode (str): team (TeamData)}
         """
@@ -34,29 +34,29 @@ class LeagueData:
         return self._teams[tricode]
 
     @property
-    def east_conference_teams(self):
+    def east_conference_teams(self) -> dict[str, TeamData]:
         """Renvoie les équipes de la conférence Est"""
         return self._east_teams
 
     @property
-    def west_conference_teams(self):
+    def west_conference_teams(self) -> dict[str, TeamData]:
         """Renvoie les équipes de la conférence Ouest"""
         return self._west_teams
 
-    def get_classement(self):
+    def get_classement(self) -> dict[int, TeamData]:
         """Renvoie le classement total sous forme de dictionnaire, le classement dépend du winrate de l'équipe
         return Dict{position (int):team (TeamData)}
         """
         return classer_dictionnaire(self.teams, TeamData.get_winrate)
 
-    def get_classement_east(self):
+    def get_classement_east(self) -> dict[int, TeamData]:
         """Renvoie le classement de la conférence est sous forme de dictionnaire,
         le classement dépend du winrate de l'équipe
             return Dict{position (int):team (TeamData)}
         """
         return classer_dictionnaire(self.east_conference_teams, TeamData.get_winrate)
 
-    def get_classement_west(self):
+    def get_classement_west(self) -> dict[int, TeamData]:
         """Renvoie le classement de la conférence ouest sous forme de dictionnaire,
         le classement dépend du winrate de l'équipe
             return Dict{position (int):team (TeamData)}

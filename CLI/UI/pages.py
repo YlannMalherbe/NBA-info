@@ -21,7 +21,7 @@ def display_info_team(team: TeamData):
 
 > **{team.get_next_match().awayTeam["teamName"]} @ {team.get_next_match().homeTeam["teamName"]}**
 >
-> 📅 {team.get_next_match().game_date}
+> 📅 {team.get_next_match().game_date.paris_date} à {team.get_next_match().game_date.paris_hour}
 >
 > 📍 {team.get_next_match().arena}
 
