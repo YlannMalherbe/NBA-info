@@ -3,6 +3,7 @@
 
 import json
 import os
+import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -10,16 +11,7 @@ import requests
 
 from core.date import GameDateTime
 from core.match import match
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0 Safari/537.36"
-    ),
-    "Accept": "application/json",
-    "Referer": "https://www.nba.com/",
-}
+from core.nba_http import HEADERS
 
 CACHE_DURATION = timedelta(hours=6)
 
@@ -35,14 +27,31 @@ class ConnectionFailedError(Exception):
 def _save_cache(data: dict):
     """Fonction pour faire un cache des données de l'API NBA"""
     cache_content = {"last_update": datetime.utcnow().isoformat(), "data": data}
-    with open(CACHE_FILE, "w", encoding="utf-8") as f:
-        json.dump(cache_content, f, ensure_ascii=False, indent=4)
+    ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=ASSETS_DIR, delete=False
+        ) as f:
+            temporary_path = Path(f.name)
+            json.dump(cache_content, f, ensure_ascii=False, indent=4)
+        os.replace(temporary_path, CACHE_FILE)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def _load_cache():
     """Fonction pour récuperer le cache enregistré de l'API"""
-    with open(CACHE_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(CACHE_FILE, "r", encoding="utf-8") as f:
+            cache = json.load(f)
+        _is_cache_valid(cache)
+        if not isinstance(cache["data"]["leagueSchedule"]["gameDates"], list):
+            return None
+        return cache
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
 
 
 def _is_cache_valid(cache: dict) -> bool:
@@ -60,10 +69,9 @@ def fetch_schedule(force_refresh: bool = False) -> dict:
     - Si refresh échoue → fallback sur ancien cache
     - Si aucun cache dispo → erreur
     """
-    if os.path.exists(CACHE_FILE) and not force_refresh:
-        cache = _load_cache()
-        if _is_cache_valid(cache):
-            return cache["data"]
+    cache = _load_cache()
+    if cache is not None and not force_refresh and _is_cache_valid(cache):
+        return cache["data"]
     try:
         url = "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json"
         r = requests.get(url, headers=HEADERS, timeout=10)
@@ -74,8 +82,8 @@ def fetch_schedule(force_refresh: bool = False) -> dict:
         _save_cache(data)
         return data
     except (requests.RequestException, ConnectionFailedError):
-        if os.path.exists(CACHE_FILE):
-            return _load_cache()["data"]
+        if cache is not None:
+            return cache["data"]
         raise ConnectionFailedError(
             "Impossible de récupérer les données NBA et aucun cache disponible."
         )

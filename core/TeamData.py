@@ -19,12 +19,14 @@ class TeamData:
     qui permet d'itentifier correctement la team NBA voulu
     """
 
-    _schedule = Schedule()
+    _schedule = None
 
     def __init__(self, team_tricode: str) -> None:
         if not est_valide_tricode(team_tricode):
             raise TeamNonExistanteErreur(f"L'équipe {team_tricode} n'existe pas")
         self._team = NBA_TEAMS[team_tricode]
+        if TeamData._schedule is None:
+            TeamData._schedule = Schedule()
         self._team_schedule = Schedule(
             gamesData=TeamData._schedule.get_matchs_x_team(team_tricode)
         )

@@ -11,11 +11,11 @@ def display_info_team(team: TeamData):
     md = f"""
 ### 📊 Résultats
 
-> **🏆 Wins**   : `{team.W}` W
+> **🏆 Wins**   : {team.W} W
 >
-> **❌ Losses** : `{team.L}` L
+> **❌ Losses** : {team.L} L
 >
-> **📈 Win %**  : `{team.get_winrate():.3f}` %
+> **📈 Win %**  : {team.get_winrate():.3f} %
 
 ###  Prochain match
 
